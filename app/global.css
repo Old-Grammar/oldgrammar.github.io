@@ -1,6 +1,61 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@custom-variant dark (&:is([data-theme="dark"] *));
+
+@theme {
+  --color-primary-50: #fff2f1;
+  --color-primary-100: #ffe3e0;
+  --color-primary-200: #ffccc6;
+  --color-primary-300: #ffa99f;
+  --color-primary-400: #ff7767;
+  --color-primary-500: #fb4d38;
+  --color-primary-600: #ea3924;
+  --color-primary-700: #c42411;
+  --color-primary-800: #a22112;
+  --color-primary-900: #862216;
+  --color-primary-950: #490d06;
+
+  --color-accent-50: #f0fafb;
+  --color-accent-100: #d8eff5;
+  --color-accent-200: #b5dfec;
+  --color-accent-300: #82c7de;
+  --color-accent-400: #48a7c8;
+  --color-accent-500: #2c8bae;
+  --color-accent-600: #256989;
+  --color-accent-700: #265c78;
+  --color-accent-800: #274d63;
+  --color-accent-900: #244255;
+  --color-accent-950: #132939;
+
+  --background-image-gradient-radial: radial-gradient(var(--tw-gradient-stops));
+  --background-image-gradient-conic: conic-gradient(
+    from 180deg at 50% 50%,
+    var(--tw-gradient-stops)
+  );
+
+  --font-sans: museo-sans-rounded, ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-serif: museo-slab, ui-serif, Georgia, Cambria, 'Times New Roman',
+    Times, serif;
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}
 
 html, body {
   @apply min-h-full h-full;
