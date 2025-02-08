@@ -17,14 +17,17 @@ export default function RootPage() {
         <h3>
           Since <span className="text-primary-600">2015</span>
         </h3>
-        <p>
-          Working on a new perspective for 2025.
-        </p>
+        <p>Working on a new perspective for 2025.</p>
         <div className="pt-6 space-y-3 normal-case font-normal">
           <h4>In the meantime, check out our other work:</h4>
           <ul className="font-sans">
             <li>
-              <a href="https://maybebrunch.ing" className="underline underline-offset-2">Maybe Brunch</a>
+              <a
+                href="https://maybebrunch.ing"
+                className="underline underline-offset-2"
+              >
+                Maybe Brunch
+              </a>
             </li>
           </ul>
         </div>
@@ -33,7 +36,7 @@ export default function RootPage() {
       <div className="mt-auto">
         <div className="md:max-w-3xl mx-auto max-w-sm">
           <Image
-            src="/Old-Grammar-dark.png"
+            src="/oldgrammar.github.io/Old-Grammar-dark.png"
             width={849}
             height={741}
             alt="Old Grammar logo"
@@ -44,5 +47,5 @@ export default function RootPage() {
         </div>
       </div>
     </article>
-  );
+  )
 }
