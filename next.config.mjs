@@ -9,17 +9,19 @@ const config = (phase) => {
     },
     transpilePackages: [],
     images: {
+      unoptimized: true,
+
       remotePatterns: [
         {
           protocol: "https",
-          hostname: "cdn.sanity.io"
+          hostname: "cdn.sanity.io",
         },
         {
           protocol: "https",
-          hostname: "images.unsplash.com"
-        }
-      ]
-    }
+          hostname: "images.unsplash.com",
+        },
+      ],
+    },
   }
 
   if (phase === PHASE_DEVELOPMENT_SERVER) {
@@ -39,6 +41,7 @@ const config = (phase) => {
 
   /** @type {import('next').NextConfig} */
   const nextConfig = {
+    basePath: "oldgrammar.github.io",
     output: "export",
     compiler: {
       reactRemoveProperties: {
