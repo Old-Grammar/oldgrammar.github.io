@@ -41,7 +41,7 @@ const config = (phase) => {
 
   /** @type {import('next').NextConfig} */
   const nextConfig = {
-    basePath: "oldgrammar.github.io",
+    basePath: "/oldgrammar.github.io",
     output: "export",
     compiler: {
       reactRemoveProperties: {
