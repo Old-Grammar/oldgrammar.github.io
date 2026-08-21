@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @custom-variant dark (&:is([data-theme="dark"] *));
 
@@ -33,10 +33,11 @@
     var(--tw-gradient-stops)
   );
 
-  --font-sans: museo-sans-rounded, ui-sans-serif, system-ui, sans-serif,
-    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  --font-serif: museo-slab, ui-serif, Georgia, Cambria, 'Times New Roman',
-    Times, serif;
+  --font-sans:
+    museo-sans-rounded, ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif:
+    museo-slab, ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 }
 
 /*
@@ -57,6 +58,7 @@
   }
 }
 
-html, body {
+html,
+body {
   @apply min-h-full h-full;
 }

@@ -1,4 +1,5 @@
-.next
+dist/
+.astro/
 .turbo
 node_modules
 .env*
@@ -10,5 +11,4 @@ node_modules
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
-out/
 .worktrees
