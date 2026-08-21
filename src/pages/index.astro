@@ -5,46 +5,52 @@ import Base from "../layouts/Base.astro";
 ---
 
 <Base>
-  <article class="bg-[#231c1c] text-primary-50 min-h-full px-0.5 flex flex-col">
-    <h1 class="font-serif font-semibold text-4xl sm:text-7xl uppercase text-primary-600">
-      Old Grammar
-    </h1>
-    <ul class="space-y-3 text-2xl sm:text-4xl text-right sm:text-left">
-      <li>Fashion</li>
-      <li>Hip Hop</li>
-      <li>Tech</li>
-    </ul>
-
-    <div class="my-12 font-serif font-semibold text-2xl sm:text-4xl uppercase md:mx-auto">
-      <h3>
-        Since <span class="text-primary-600">2015</span>
-      </h3>
-      <p>Working on a new perspective for 2025.</p>
-      <div class="pt-6 space-y-3 normal-case font-normal">
-        <h4>In the meantime, check out our other work:</h4>
-        <ul class="font-sans">
-          <li>
-            <a
-              href="https://maybebrunch.ing"
-              class="underline underline-offset-2"
-            >
-              Maybe Brunch
-            </a>
-          </li>
+    <article
+        class="bg-[#231c1c] text-primary-50 min-h-full px-0.5 flex flex-col"
+    >
+        <h1
+            class="font-serif font-semibold text-4xl sm:text-7xl uppercase text-primary-600"
+        >
+            Old Grammar
+        </h1>
+        <ul class="space-y-3 text-2xl sm:text-4xl text-right sm:text-left">
+            <li>Fashion</li>
+            <li>Hip Hop</li>
+            <li>Tech</li>
         </ul>
-      </div>
-    </div>
 
-    <div class="mt-auto">
-      <div class="md:max-w-3xl mx-auto max-w-sm">
-        <Image
-          src={logo}
-          alt="Old Grammar logo"
-          quality={100}
-          loading="eager"
-          class="object-contain"
-        />
-      </div>
-    </div>
-  </article>
+        <div
+            class="my-12 font-serif font-semibold text-2xl sm:text-4xl uppercase md:mx-auto"
+        >
+            <h3>
+                Since <span class="text-primary-600">2016</span>
+            </h3>
+            <p>Working on a new perspective for 2026.</p>
+            <div class="pt-6 space-y-3 normal-case font-normal">
+                <h4>In the meantime, check out our other work:</h4>
+                <ul class="font-sans">
+                    <li>
+                        <a
+                            href="https://maybebrunch.ing"
+                            class="underline underline-offset-2"
+                        >
+                            Maybe Brunch
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="mt-auto">
+            <div class="md:max-w-3xl mx-auto max-w-sm">
+                <Image
+                    src={logo}
+                    alt="Old Grammar logo"
+                    quality={100}
+                    loading="eager"
+                    class="object-contain"
+                />
+            </div>
+        </div>
+    </article>
 </Base>
