@@ -2,12 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "compatibility_date": "2026-08-21",
   "compatibility_flags": ["global_fetch_strictly_public"],
-  "name": "oldgrammar",
-  "main": "@astrojs/cloudflare/entrypoints/server",
-  "assets": {
-    "directory": "./dist",
-    "binding": "ASSETS"
-  },
+  "name": "oldgrammar-web",
   "observability": {
     "enabled": true
   }
