@@ -3,9 +3,10 @@ import "../styles/global.css";
 
 interface Props {
   title?: string;
+  description?: string;
 }
 
-const { title = "Old Grammar" } = Astro.props;
+const { title = "Old Grammar", description } = Astro.props;
 ---
 
 <html lang="en">
@@ -16,6 +17,7 @@ const { title = "Old Grammar" } = Astro.props;
       name="format-detection"
       content="telephone=no, date=no, email=no, address=no"
     />
+    {description && <meta name="description" content={description} />}
     <link rel="icon" href="/favicon.png" />
     <link rel="stylesheet" href="https://use.typekit.net/zuh8lpn.css" />
     <title>{title}</title>

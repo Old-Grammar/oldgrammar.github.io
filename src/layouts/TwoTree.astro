@@ -1,0 +1,227 @@
+---
+import Base from "./Base.astro";
+
+interface Props {
+    title: string;
+    description?: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<Base title={title} description={description}>
+    <main class="tt">
+        <div class="tt-column">
+            <slot />
+        </div>
+    </main>
+</Base>
+
+<style is:global>
+    html:has(.tt),
+    html:has(.tt) body {
+        background-color: var(--tt-canvas);
+    }
+
+    .tt {
+        /*
+          The semantic vocabulary of the two-tree laurel family, light
+          appearance, verbatim from the app's DESIGN.md. Scoped to this layout
+          so the tokens never reach the rest of the site.
+        */
+        --tt-canvas: hsl(39.1, 36.5%, 87.6%);
+        --tt-surface: hsl(39.1, 40.2%, 92%);
+        --tt-border: hsl(39.1, 21.9%, 76%);
+        --tt-canvas-deep: hsl(140.6, 100%, 18%);
+        --tt-ink: hsl(96, 55.6%, 1.8%);
+        --tt-ink-muted: hsl(166, 14%, 32.2%);
+        --tt-primary: hsl(140.6, 100%, 20%);
+        --tt-primary-deep: hsl(166, 100%, 12.9%);
+        --tt-on-primary: hsl(39.1, 36.5%, 87.6%);
+
+        --tt-xs: 4px;
+        --tt-sm: 8px;
+        --tt-md: 12px;
+        --tt-lg: 16px;
+        --tt-xl: 24px;
+        --tt-2xl: 32px;
+        --tt-3xl: 48px;
+        --tt-4xl: 64px;
+
+        --tt-radius-md: 5px;
+        --tt-radius-lg: 8px;
+
+        /* The platform's own face. No family is named and nothing is loaded. */
+        font-family:
+            -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto,
+            "Helvetica Neue", Arial, sans-serif;
+        font-synthesis: none;
+        color-scheme: light;
+        accent-color: var(--tt-primary);
+        scrollbar-color: var(--tt-border) var(--tt-canvas);
+
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+        padding: var(--tt-4xl) var(--tt-lg);
+        background-color: var(--tt-canvas);
+        color: var(--tt-ink);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .tt ::selection {
+        background-color: var(--tt-primary);
+        color: var(--tt-on-primary);
+    }
+
+    .tt :focus-visible {
+        outline: 2px solid var(--tt-ink);
+        outline-offset: 2px;
+        border-radius: var(--tt-radius-md);
+    }
+
+    /*
+      One column at phone measure, so a desktop reads what a phone reads.
+      `margin: auto` rather than `justify-content` on the ground, so a viewport
+      shorter than the column pushes the overflow down instead of clipping it.
+    */
+    .tt-column {
+        width: 100%;
+        max-width: 560px;
+        margin: auto;
+    }
+
+    /* The eight roles, at the metrics the app resolves them to on iOS. */
+    .tt-display {
+        font-size: 34px;
+        font-weight: 600;
+        line-height: 41px;
+        letter-spacing: 0.37px;
+    }
+
+    .tt-title {
+        font-size: 22px;
+        font-weight: 600;
+        line-height: 28px;
+        letter-spacing: 0.35px;
+    }
+
+    .tt-prompt {
+        font-size: 20px;
+        font-weight: 400;
+        line-height: 25px;
+        letter-spacing: 0.38px;
+    }
+
+    .tt-entry {
+        font-size: 17px;
+        font-weight: 400;
+        line-height: 26px;
+        letter-spacing: -0.41px;
+    }
+
+    .tt-body {
+        font-size: 17px;
+        font-weight: 400;
+        line-height: 22px;
+        letter-spacing: -0.41px;
+    }
+
+    .tt-label {
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 21px;
+        letter-spacing: -0.32px;
+    }
+
+    .tt-caption {
+        font-size: 13px;
+        font-weight: 400;
+        line-height: 18px;
+        letter-spacing: -0.08px;
+    }
+
+    /* Ink is the person, muted ink is the app. */
+    .tt-muted {
+        color: var(--tt-ink-muted);
+    }
+
+    /* The one weight knob: semibold, and nothing else changes. */
+    .tt-emphasis {
+        font-weight: 600;
+    }
+
+    .tt a {
+        color: inherit;
+        text-decoration: underline;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.2em;
+    }
+
+    .tt a:hover {
+        color: var(--tt-ink);
+    }
+
+    /* Specific enough to beat the link underline above. */
+    .tt a.tt-button,
+    .tt-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: var(--tt-md) var(--tt-xl);
+        border-radius: var(--tt-radius-md);
+        background-color: var(--tt-primary);
+        color: var(--tt-on-primary);
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 21px;
+        letter-spacing: -0.32px;
+        text-decoration: none;
+    }
+
+    /* Press feedback is a background step, and nothing moves. */
+    .tt a.tt-button:hover,
+    .tt a.tt-button:active {
+        background-color: var(--tt-primary-deep);
+        color: var(--tt-on-primary);
+    }
+
+    /*
+      The marks stand at the foot of a page, bottom-aligned and `lg` apart, as
+      the app stands them. The negative inset is the transparent margin the
+      broadleaf's artboard carries on its left, pulled off so the drawing
+      aligns to the column rather than to its own viewBox.
+    */
+    .tt-marks {
+        margin-left: -13px;
+        display: flex;
+        align-items: flex-end;
+        gap: var(--tt-lg);
+    }
+
+    .tt-tree-one {
+        width: 96px;
+        height: 96px;
+    }
+
+    .tt-tree-two {
+        width: 48px;
+        height: 48px;
+    }
+
+    .tt-canopy {
+        fill: var(--tt-canvas-deep);
+    }
+
+    .tt-trunk {
+        fill: var(--tt-ink-muted);
+    }
+
+    .tt-footer {
+        margin-top: var(--tt-xl);
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--tt-xs) var(--tt-lg);
+    }
+</style>

@@ -1,0 +1,69 @@
+---
+import TwoTreeMarks from "../../../components/TwoTreeMarks.astro";
+import TwoTree from "../../../layouts/TwoTree.astro";
+
+export const prerender = true;
+
+const APP_STORE_URL = "#";
+const PLAY_STORE_URL = "#";
+---
+
+<TwoTree
+    title="Two, Tree — a private daily journal"
+    description="Write down two or three good things from your day. It stays on this phone. There is no account and nothing to sign in to."
+>
+    <header>
+        <h1 class="tt-display">Two, Tree</h1>
+        <p class="tt-body tt-muted tt-tagline">
+            A private daily journal for two or three good things each day.
+        </p>
+    </header>
+
+    <div class="tt-points">
+        <p class="tt-body tt-muted">Private, simple to use, no gamification.</p>
+        <p class="tt-body tt-muted tt-emphasis">
+            Your stays on this phone. There is no account and nothing to sign in
+            to.
+        </p>
+    </div>
+
+    <div class="tt-actions">
+        <a class="tt-button" href={APP_STORE_URL}>App Store</a>
+        <a class="tt-button" href={PLAY_STORE_URL}>Google Play</a>
+    </div>
+
+    <TwoTreeMarks />
+
+    <footer class="tt-caption tt-muted tt-footer">
+        <a href="/projects/two-tree/tou-and-privacy"
+            >Terms of Use &amp; Privacy Policy</a
+        >
+        <span>Old Grammar, LLC</span>
+    </footer>
+</TwoTree>
+
+<style is:global>
+    .tt-tagline {
+        margin-top: var(--tt-sm);
+        text-wrap: balance;
+    }
+
+    .tt-points {
+        margin-top: var(--tt-2xl);
+        display: flex;
+        flex-direction: column;
+        gap: var(--tt-sm);
+        max-width: 46ch;
+    }
+
+    .tt-actions {
+        margin-top: var(--tt-3xl);
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--tt-md);
+    }
+
+    .tt-marks {
+        margin-top: var(--tt-4xl);
+    }
+</style>

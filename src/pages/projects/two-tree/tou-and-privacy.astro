@@ -1,14 +1,148 @@
 ---
+import TwoTreeMarks from "../../../components/TwoTreeMarks.astro";
+import TwoTree from "../../../layouts/TwoTree.astro";
+import {
+    Content,
+    frontmatter,
+} from "../../../../content/two-tree/tou-and-privacy.md";
 
+export const prerender = true;
+
+const [month, day, year] = frontmatter.effectiveDate.split("-").map(Number);
+const effectiveDate = new Date(
+    Date.UTC(year, month - 1, day),
+).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+});
 ---
 
-<div>
-    <h1>Terms of Use & Privacy Policy</h1>
+<TwoTree title="Two, Tree — Terms of Use & Privacy Policy">
+    <h1 class="tt-display">Terms of Use &amp; Privacy Policy</h1>
 
-    **Two Tree** Effective {frontmatter.effectiveDate}
+    <p class="tt-entry tt-muted tt-effective">
+        <strong class="tt-emphasis">Two, Tree</strong> — Effective {
+            effectiveDate
+        }
+    </p>
 
-    Two Tree is operated by Old Grammar, LLC ("Old Grammar," "we," "us," or
-    "our"). These terms and this privacy policy apply to the Two Tree app for
-    iOS and Android (the "App"). Questions? Email
-    [support@oldgrammar.com](mailto:support@oldgrammar.com).
-</div>
+    <p class="tt-entry tt-operator">
+        Two, Tree is operated by Old Grammar, LLC ("Old Grammar," "we," "us," or
+        "our"). These terms and this privacy policy apply to the Two Tree app
+        for iOS and Android (the "App"). Questions? Email <a
+            href="mailto:support@oldgrammar.com">support@oldgrammar.com</a
+        >.
+    </p>
+
+    <div class="legal">
+        <Content />
+    </div>
+
+    <TwoTreeMarks />
+
+    <footer class="tt-caption tt-muted tt-footer">
+        <a href="/projects/two-tree/">Two, Tree</a>
+        <span>Old Grammar, LLC</span>
+    </footer>
+</TwoTree>
+
+<style is:global>
+    .tt-effective {
+        margin-top: var(--tt-md);
+    }
+
+    .tt-operator {
+        margin-top: var(--tt-lg);
+    }
+
+    .legal {
+        margin-top: var(--tt-2xl);
+    }
+
+    /*
+      The part break. One hairline, and it never exceeds a hairline: the rule is
+      what says a new document has started, so the heading needs no other mark.
+    */
+    .legal h1 {
+        font-size: 22px;
+        font-weight: 600;
+        line-height: 28px;
+        letter-spacing: 0.35px;
+        margin-top: var(--tt-4xl);
+        padding-top: var(--tt-3xl);
+        margin-bottom: var(--tt-xl);
+        border-top: 1px solid var(--tt-border);
+    }
+
+    .legal h1:first-child {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: 0;
+    }
+
+    /* More space above a heading than below it, at every level. */
+    .legal h2 {
+        font-size: 17px;
+        font-weight: 600;
+        line-height: 22px;
+        letter-spacing: -0.41px;
+        margin-top: var(--tt-2xl);
+        margin-bottom: var(--tt-md);
+    }
+
+    .legal h3 {
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 21px;
+        letter-spacing: -0.32px;
+        color: var(--tt-ink-muted);
+        margin-top: var(--tt-xl);
+        margin-bottom: var(--tt-sm);
+    }
+
+    /*
+      The reading treatment is leading alone: 26 against body's 22, which is the
+      difference `entry` carries and the whole of it.
+    */
+    .legal p,
+    .legal li {
+        font-size: 17px;
+        font-weight: 400;
+        line-height: 26px;
+        letter-spacing: -0.41px;
+    }
+
+    .legal p {
+        margin-block: var(--tt-md);
+    }
+
+    .legal ul {
+        margin-block: var(--tt-md);
+        padding-left: var(--tt-xl);
+        list-style: disc;
+    }
+
+    .legal li {
+        margin-top: var(--tt-sm);
+    }
+
+    .legal li::marker {
+        color: var(--tt-ink-muted);
+    }
+
+    .legal strong {
+        font-weight: 600;
+    }
+
+    .legal hr {
+        margin-block: var(--tt-3xl);
+        border: 0;
+        border-top: 1px solid var(--tt-border);
+    }
+
+    .legal + .tt-marks {
+        margin-top: var(--tt-4xl);
+    }
+</style>
