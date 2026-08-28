@@ -1,0 +1,758 @@
+---
+import { env } from "cloudflare:workers";
+import Base from "../layouts/Base.astro";
+
+export const prerender = false;
+
+const MESSAGE_LIMIT = 4000;
+
+const PROJECTS = [
+  {
+    id: "two-tree",
+    name: "Two, Tree",
+    note: "The private daily journal, on iOS and Android.",
+  },
+  {
+    id: "maybe-brunch",
+    name: "Maybe Brunch",
+    note: "maybebrunch.com",
+  },
+  {
+    id: "general",
+    name: "Old Grammar",
+    note: "The studio itself, or anything with no project attached.",
+  },
+];
+
+const TURNSTILE_ACTION = "contact";
+
+/*
+  The widget is registered for the production hostname alone, so the hostname
+  is what decides whether the page is protected. On oldgrammar.com the widget
+  renders and every send must pass siteverify; anywhere else — local
+  development — there is no widget to render and nothing to verify. The Worker
+  answers on its custom domain only, so a request cannot claim to be elsewhere.
+*/
+const expectedHostnames = new Set(
+  env.TURNSTILE_HOSTNAMES.split(",")
+    .map((hostname) => hostname.trim())
+    .filter(Boolean),
+);
+const verifyRequired = expectedHostnames.has(Astro.url.hostname);
+const siteKey = env.TURNSTILE_SITE_KEY;
+
+const isProject = (id: string) => PROJECTS.some((project) => project.id === id);
+
+let values = {
+  project: Astro.url.searchParams.get("project") ?? "",
+  message: "",
+  email: "",
+  name: "",
+};
+const errors: Record<string, string> = {};
+let sent = false;
+let sendFailed = false;
+
+if (!isProject(values.project)) {
+  values.project = "";
+}
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const read = (field: string) => String(form.get(field) ?? "").trim();
+
+  values = {
+    project: read("project"),
+    message: read("message"),
+    email: read("email"),
+    name: read("name"),
+  };
+
+  if (!isProject(values.project)) {
+    errors.project = "Choose the project this message is about.";
+  }
+  if (values.message.length === 0) {
+    errors.message = "The message is empty.";
+  } else if (values.message.length > MESSAGE_LIMIT) {
+    errors.message = `The message is ${values.message.length - MESSAGE_LIMIT} characters over the ${MESSAGE_LIMIT} limit.`;
+  }
+  if (values.email.length === 0) {
+    errors.email = "Add an email address, or a reply cannot reach you.";
+  } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(values.email)) {
+    errors.email = "That address is missing an @ or a domain.";
+  }
+
+  /*
+    Fails closed: a missing secret, a network error, a non-2xx reply, an
+    unexpected action, or a hostname the widget was not registered for all
+    stop the send.
+  */
+  if (verifyRequired && Object.keys(errors).length === 0) {
+    const secret = env.TURNSTILE_SECRET_KEY;
+    const token = String(form.get("cf-turnstile-response") ?? "");
+    const clientIp = Astro.request.headers.get("cf-connecting-ip");
+
+    const body = new URLSearchParams({ secret, response: token });
+    if (clientIp) {
+      body.set("remoteip", clientIp);
+    }
+
+    let verified = false;
+    if (secret && token.length > 0 && token.length <= 2048) {
+      try {
+        const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+          method: "POST",
+          headers: { "content-type": "application/x-www-form-urlencoded" },
+          signal: AbortSignal.timeout(10_000),
+          body,
+        });
+        if (!response.ok) {
+          throw new Error(`siteverify ${response.status}`);
+        }
+        const outcome = (await response.json()) as {
+          success: boolean;
+          action?: string;
+          hostname?: string;
+        };
+        verified =
+          outcome.success &&
+          outcome.action === TURNSTILE_ACTION &&
+          expectedHostnames.has(outcome.hostname ?? "");
+      } catch {
+        verified = false;
+      }
+    }
+
+    if (!verified) {
+      errors.turnstile =
+        "The spam check did not pass. Reload the page and send again. If it keeps failing, write to support@oldgrammar.com.";
+    }
+  }
+
+  if (Object.keys(errors).length === 0) {
+    const project = PROJECTS.find((entry) => entry.id === values.project);
+    const sender = values.name ? `${values.name} <${values.email}>` : values.email;
+
+    try {
+      await env.EMAIL.send({
+        to: env.CONTACT_TO,
+        from: {
+          email: env.CONTACT_FROM,
+          name: "Old Grammar contact form",
+        },
+        replyTo: values.name ? { email: values.email, name: values.name } : values.email,
+        subject: `${project?.name}: message from ${sender}`,
+        text: [`Project: ${project?.name}`, `From: ${sender}`, "", values.message].join("\n"),
+      });
+      sent = true;
+    } catch {
+      sendFailed = true;
+    }
+  }
+}
+
+const chosen = PROJECTS.find((project) => project.id === values.project);
+const projectNames = Object.fromEntries(PROJECTS.map((project) => [project.id, project.name]));
+const invalid = (field: string) => (errors[field] ? "true" : undefined);
+---
+
+<Base
+    title="Contact — Old Grammar"
+    description="Send a message to Old Grammar about Two, Tree, Maybe Brunch, or the studio. Every message reaches support@oldgrammar.com."
+>
+    <article class="og">
+        <div class="og-column">
+            <header>
+                <h1 class="og-display">Contact</h1>
+                <p class="og-lede">
+                    Pick the project, write your message, and it reaches a
+                    person. Every message goes to <a
+                        href="mailto:support@oldgrammar.com"
+                        >support@oldgrammar.com</a
+                    >, which you can also write to directly.
+                </p>
+            </header>
+
+            {
+                sent ? (
+                    <section class="og-sent">
+                        <h2 class="og-heading">Sent.</h2>
+                        <p class="og-sent-body">
+                            Your message about{" "}
+                            <strong class="og-strong">{chosen?.name}</strong> is
+                            on its way to support@oldgrammar.com. The reply goes
+                            to{" "}
+                            <strong class="og-strong">{values.email}</strong>.
+                        </p>
+                        <p class="og-note">
+                            Nothing was kept on this page. Reload it to write
+                            another message.
+                        </p>
+                        <a class="og-submit og-submit-link" href="/contact">
+                            Write another message
+                        </a>
+                    </section>
+                ) : (
+                    <form
+                        class="og-form"
+                        method="POST"
+                        action="/contact"
+                        data-contact-form
+                        data-project-names={JSON.stringify(projectNames)}>
+                        {sendFailed && (
+                            <p class="og-alert" role="alert">
+                                The message did not send. Nothing was lost — the
+                                text is still below, and you can send it again.
+                                If it keeps failing, write to{" "}
+                                <a href="mailto:support@oldgrammar.com">
+                                    support@oldgrammar.com
+                                </a>
+                                .
+                            </p>
+                        )}
+
+                        <fieldset
+                            class="og-fieldset"
+                            aria-describedby={
+                                errors.project ? "project-error" : undefined
+                            }>
+                            <legend class="og-legend">Which project?</legend>
+
+                            <div class="og-options">
+                                {PROJECTS.map((project) => (
+                                    <label class="og-option">
+                                        <input
+                                            class="og-radio"
+                                            type="radio"
+                                            name="project"
+                                            value={project.id}
+                                            checked={
+                                                values.project === project.id
+                                            }
+                                            required
+                                        />
+                                        <span class="og-option-body">
+                                            <span class="og-option-name">
+                                                {project.name}
+                                            </span>
+                                            <span class="og-option-note">
+                                                {project.note}
+                                            </span>
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+
+                            {errors.project && (
+                                <p class="og-error" id="project-error">
+                                    {errors.project}
+                                </p>
+                            )}
+                        </fieldset>
+
+                        <div class="og-field" data-invalid={invalid("message")}>
+                            <label class="og-label" for="message">
+                                Your message
+                                <span data-project-label>
+                                    {chosen ? ` about ${chosen.name}` : ""}
+                                </span>
+                            </label>
+                            <textarea
+                                class="og-control og-textarea"
+                                id="message"
+                                name="message"
+                                rows="8"
+                                maxlength={MESSAGE_LIMIT}
+                                required
+                                aria-invalid={invalid("message")}
+                                aria-describedby={
+                                    errors.message
+                                        ? "message-error message-count"
+                                        : "message-count"
+                                }
+                                data-message>{values.message}</textarea>
+                            <p class="og-note" id="message-count" data-count hidden />
+                            {errors.message && (
+                                <p class="og-error" id="message-error">
+                                    {errors.message}
+                                </p>
+                            )}
+                        </div>
+
+                        <div class="og-field" data-invalid={invalid("email")}>
+                            <label class="og-label" for="email">
+                                Your email
+                            </label>
+                            <p class="og-note" id="email-note">
+                                The only way a reply can find you.
+                            </p>
+                            <input
+                                class="og-control"
+                                id="email"
+                                name="email"
+                                type="email"
+                                autocomplete="email"
+                                inputmode="email"
+                                required
+                                value={values.email}
+                                aria-invalid={invalid("email")}
+                                aria-describedby={
+                                    errors.email
+                                        ? "email-note email-error"
+                                        : "email-note"
+                                }
+                            />
+                            {errors.email && (
+                                <p class="og-error" id="email-error">
+                                    {errors.email}
+                                </p>
+                            )}
+                        </div>
+
+                        <div class="og-field">
+                            <label class="og-label" for="name">
+                                Your name
+                            </label>
+                            <p class="og-note" id="name-note">
+                                Optional.
+                            </p>
+                            <input
+                                class="og-control"
+                                id="name"
+                                name="name"
+                                type="text"
+                                autocomplete="name"
+                                value={values.name}
+                                aria-describedby="name-note"
+                            />
+                        </div>
+
+                        {verifyRequired && (
+                            <div
+                                class="cf-turnstile og-turnstile"
+                                data-sitekey={siteKey}
+                                data-action={TURNSTILE_ACTION}
+                                data-theme="dark"
+                            />
+                        )}
+
+                        {errors.turnstile && (
+                            <p class="og-error og-error-block" role="alert">
+                                {errors.turnstile}
+                            </p>
+                        )}
+
+                        <button class="og-submit" type="submit" data-submit>
+                            Send message
+                        </button>
+                    </form>
+                )
+            }
+
+            <footer class="og-footer">
+                <a href="/">Old Grammar</a>
+                <a href="mailto:support@oldgrammar.com"
+                    >support@oldgrammar.com</a
+                >
+                <span>Old Grammar, LLC</span>
+            </footer>
+        </div>
+    </article>
+</Base>
+
+{verifyRequired && (
+    <script
+        is:inline
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        async
+        defer></script>
+)}
+
+<script>
+    const form = document.querySelector<HTMLFormElement>("[data-contact-form]");
+    if (form) {
+        const names: Record<string, string> = JSON.parse(
+            form.dataset.projectNames ?? "{}",
+        );
+        const projectLabel =
+            form.querySelector<HTMLElement>("[data-project-label]");
+        for (const radio of form.querySelectorAll<HTMLInputElement>(
+            'input[name="project"]',
+        )) {
+            radio.addEventListener("change", () => {
+                if (projectLabel) {
+                    projectLabel.textContent = ` about ${names[radio.value]}`;
+                }
+            });
+        }
+
+        const message = form.querySelector<HTMLTextAreaElement>("[data-message]");
+        const count = form.querySelector<HTMLElement>("[data-count]");
+        if (message && count) {
+            const limit = Number(message.getAttribute("maxlength"));
+            message.addEventListener("input", () => {
+                const left = limit - message.value.length;
+                count.hidden = left > 500;
+                count.textContent = `${left} characters left`;
+            });
+        }
+
+        form.addEventListener("submit", () => {
+            const submit = form.querySelector<HTMLButtonElement>("[data-submit]");
+            if (submit) {
+                form.setAttribute("aria-busy", "true");
+                submit.textContent = "Sending…";
+                requestAnimationFrame(() => {
+                    submit.disabled = true;
+                });
+            }
+        });
+    }
+</script>
+
+<style is:global>
+    html:has(.og),
+    html:has(.og) body {
+        background-color: var(--og-ground);
+    }
+
+    .og {
+        --og-ground: #231c1c;
+        --og-field: #2b2222;
+        --og-line: #3d3130;
+        --og-line-strong: #574746;
+        --og-disabled: #4a2a24;
+
+        color-scheme: dark;
+        accent-color: var(--color-primary-600);
+        caret-color: var(--color-primary-500);
+        scrollbar-color: var(--og-line-strong) var(--og-ground);
+
+        min-height: 100%;
+        padding: 4rem 1.5rem 3rem;
+        background-color: var(--og-ground);
+        color: var(--color-primary-50);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    @media (min-width: 640px) {
+        .og {
+            padding: 6rem 2.5rem 4rem;
+        }
+    }
+
+    .og ::selection {
+        background-color: var(--color-primary-700);
+        color: var(--color-primary-50);
+    }
+
+    .og-column {
+        width: 100%;
+        max-width: 42rem;
+        margin-inline: auto;
+    }
+
+    .og-display {
+        font-family: var(--font-serif);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: clamp(2.5rem, 9vw, 4rem);
+        line-height: 1;
+        letter-spacing: -0.02em;
+        color: var(--color-primary-600);
+    }
+
+    .og-lede {
+        margin-top: 1.25rem;
+        max-width: 42ch;
+        font-size: 1.125rem;
+        line-height: 1.55;
+        color: var(--color-primary-200);
+        text-wrap: pretty;
+    }
+
+    .og a {
+        color: inherit;
+        text-decoration: underline;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.2em;
+        text-decoration-color: var(--color-primary-500);
+    }
+
+    .og a:hover {
+        color: var(--color-primary-300);
+        text-decoration-color: currentColor;
+    }
+
+    .og :focus-visible {
+        outline: 2px solid var(--color-accent-400);
+        outline-offset: 3px;
+        border-radius: 2px;
+    }
+
+    /* The project stack: the home page's own index, made selectable. */
+    .og-fieldset {
+        margin-top: 4rem;
+        border: 0;
+        padding: 0;
+        min-inline-size: 0;
+    }
+
+    .og-legend {
+        padding: 0;
+        font-family: var(--font-serif);
+        font-weight: 600;
+        font-size: 1.25rem;
+        line-height: 1.3;
+        color: var(--color-primary-100);
+    }
+
+    .og-options {
+        margin-top: 1.25rem;
+        border-top: 1px solid var(--og-line);
+    }
+
+    .og-option {
+        display: block;
+        position: relative;
+        padding: 1rem 0 1rem 3rem;
+        border-bottom: 1px solid var(--og-line);
+        cursor: pointer;
+    }
+
+    .og-radio {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .og-option-name {
+        display: block;
+        position: relative;
+        font-family: var(--font-serif);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 1.5rem;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+        color: var(--color-primary-50);
+        transition: color 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @media (min-width: 640px) {
+        .og-option-name {
+            font-size: 2rem;
+        }
+    }
+
+    /*
+      The one authored moment on the page: the rule draws itself into the
+      gutter and the line commits to red. Everything else holds still.
+    */
+    .og-option-name::before {
+        content: "";
+        position: absolute;
+        left: -3rem;
+        top: 0.55em;
+        width: 2rem;
+        height: 2px;
+        background-color: var(--color-primary-600);
+        transform: scaleX(0);
+        transform-origin: left center;
+        transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .og-option-note {
+        display: block;
+        margin-top: 0.375rem;
+        font-size: 0.9375rem;
+        line-height: 1.5;
+        color: var(--color-primary-300);
+    }
+
+    .og-option:hover .og-option-name {
+        color: var(--color-primary-200);
+    }
+
+    .og-radio:checked ~ .og-option-body .og-option-name {
+        color: var(--color-primary-600);
+    }
+
+    .og-radio:checked ~ .og-option-body .og-option-name::before {
+        transform: scaleX(1);
+    }
+
+    .og-radio:focus-visible ~ .og-option-body {
+        outline: 2px solid var(--color-accent-400);
+        outline-offset: 6px;
+        border-radius: 2px;
+    }
+
+    .og-field {
+        margin-top: 3rem;
+    }
+
+    .og-label {
+        display: block;
+        font-family: var(--font-serif);
+        font-weight: 600;
+        font-size: 1.25rem;
+        line-height: 1.3;
+        color: var(--color-primary-100);
+    }
+
+    .og-note {
+        margin-top: 0.375rem;
+        font-size: 0.9375rem;
+        line-height: 1.5;
+        color: var(--color-primary-300);
+    }
+
+    .og-control {
+        display: block;
+        width: 100%;
+        margin-top: 0.875rem;
+        min-height: 3rem;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--og-line-strong);
+        border-radius: 2px;
+        background-color: var(--og-field);
+        color: var(--color-primary-50);
+        font-family: inherit;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .og-textarea {
+        min-height: 12rem;
+        resize: vertical;
+    }
+
+    .og-control:hover {
+        border-color: var(--color-primary-900);
+    }
+
+    .og-control:focus-visible {
+        border-color: var(--color-primary-500);
+    }
+
+    .og-field[data-invalid] .og-control {
+        border-color: var(--color-primary-500);
+    }
+
+    .og-error {
+        margin-top: 0.625rem;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        line-height: 1.5;
+        color: var(--color-primary-200);
+    }
+
+    .og-error-block {
+        margin-top: 1.5rem;
+    }
+
+    .og-alert {
+        margin-bottom: 2rem;
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--color-primary-700);
+        border-radius: 2px;
+        background-color: #33201d;
+        font-size: 1rem;
+        line-height: 1.55;
+        color: var(--color-primary-100);
+    }
+
+    .og-turnstile {
+        margin-top: 3rem;
+    }
+
+    .og-submit {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 3rem;
+        min-height: 3rem;
+        padding: 0 1.75rem;
+        border: 0;
+        border-radius: 2px;
+        background-color: var(--color-primary-700);
+        color: var(--color-primary-50);
+        font-family: inherit;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        transition: background-color 160ms ease-out;
+    }
+
+    .og-submit:hover {
+        background-color: var(--color-primary-800);
+    }
+
+    .og-submit:disabled {
+        background-color: var(--og-disabled);
+        color: var(--color-primary-300);
+        cursor: progress;
+    }
+
+    .og a.og-submit-link {
+        text-decoration: none;
+    }
+
+    .og a.og-submit-link:hover {
+        color: var(--color-primary-50);
+    }
+
+    .og-sent {
+        margin-top: 4rem;
+    }
+
+    .og-heading {
+        font-family: var(--font-serif);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 2rem;
+        line-height: 1.1;
+        letter-spacing: -0.01em;
+        color: var(--color-primary-600);
+    }
+
+    .og-sent-body {
+        margin-top: 1.25rem;
+        max-width: 46ch;
+        font-size: 1.125rem;
+        line-height: 1.55;
+        color: var(--color-primary-100);
+    }
+
+    .og-strong {
+        font-weight: 600;
+        color: var(--color-primary-50);
+    }
+
+    .og-sent .og-note {
+        margin-top: 1rem;
+        max-width: 46ch;
+    }
+
+    .og-footer {
+        margin-top: 5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--og-line);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem 1.5rem;
+        font-size: 0.9375rem;
+        color: var(--color-primary-300);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .og *,
+        .og *::before {
+            transition-duration: 0.01ms;
+        }
+    }
+</style>

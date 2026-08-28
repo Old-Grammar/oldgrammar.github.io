@@ -10,5 +10,29 @@
   ],
   "observability": {
     "enabled": true
+  },
+  // The site is reachable only on its custom domain, so the Turnstile
+  // hostname check below cannot be sidestepped through a workers.dev URL.
+  "workers_dev": false,
+  "secrets": {
+    "required": ["TURNSTILE_SECRET_KEY"]
+  },
+  "send_email": [
+    {
+      "name": "EMAIL",
+      "destination_address": "support@oldgrammar.com"
+    }
+  ],
+  "vars": {
+    "CONTACT_FROM": "noreply@oldgrammar.com",
+    "CONTACT_TO": "support@oldgrammar.com",
+    // A Turnstile site key is public. The matching secret is set with
+    // `wrangler secret put TURNSTILE_SECRET_KEY`.
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAEfjq5f9DldEqpS-",
+    // The widget is registered for this host alone. It doubles as the switch
+    // that turns the spam check on: a request arriving on any other hostname
+    // (local development) renders no widget and verifies nothing, and a
+    // request arriving here must pass. localhost never belongs in this list.
+    "TURNSTILE_HOSTNAMES": "oldgrammar.com"
   }
 }
