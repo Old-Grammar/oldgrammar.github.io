@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!!**/dist", "!.claude"]
+    "includes": ["**", "!!**/dist", "!.claude", "!worker-configuration.d.ts", "!.impeccable"]
   },
   "formatter": {
     "enabled": true,

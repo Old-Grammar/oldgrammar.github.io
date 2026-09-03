@@ -184,13 +184,6 @@ const invalid = (field: string) => (errors[field] ? "true" : undefined);
                             to{" "}
                             <strong class="og-strong">{values.email}</strong>.
                         </p>
-                        <p class="og-note">
-                            Nothing was kept on this page. Reload it to write
-                            another message.
-                        </p>
-                        <a class="og-submit og-submit-link" href="/contact">
-                            Write another message
-                        </a>
                     </section>
                 ) : (
                     <form
@@ -698,14 +691,6 @@ const invalid = (field: string) => (errors[field] ? "true" : undefined);
         cursor: progress;
     }
 
-    .og a.og-submit-link {
-        text-decoration: none;
-    }
-
-    .og a.og-submit-link:hover {
-        color: var(--color-primary-50);
-    }
-
     .og-sent {
         margin-top: 4rem;
     }
@@ -731,11 +716,6 @@ const invalid = (field: string) => (errors[field] ? "true" : undefined);
     .og-strong {
         font-weight: 600;
         color: var(--color-primary-50);
-    }
-
-    .og-sent .og-note {
-        margin-top: 1rem;
-        max-width: 46ch;
     }
 
     .og-footer {
